@@ -1,7 +1,7 @@
 = content board
   .board-container
-    .game-board
-      {{ range .InitBoard }}
+    .game-board.is-disabled
+      {{ range .board }}
         = include ./templates/tile .
       {{end}}
       

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"gomcts"
 	"html/template"
@@ -8,6 +9,24 @@ import (
 
 	"github.com/yosssi/ace"
 )
+
+const START_OP = "start"
+const REQUEST_OP = "reset"
+const MOVE_OP = "move"
+const LEGAL_MOVES = "lmoves"
+
+const HUMAN = "1"
+const RANDOM_AI = "2"
+const SMART_AI = "3"
+
+// Request from the running game
+type OthelloReq struct {
+	ID        int64  `json:"id"`
+	BlackOpt  string `json:"black"`
+	WhiteOpt  string `json:"white"`
+	Move      string `json:"move"`
+	Operation string `json:"operation"`
+}
 
 func buildBoardArr(s string) []string {
 	board := make([]string, 0)
@@ -19,7 +38,8 @@ func buildBoardArr(s string) []string {
 	return board
 }
 func handler(w http.ResponseWriter, r *http.Request) {
-	initBoard := buildBoardArr("...........................wb......bw...........................")
+
+	board := buildBoardArr("...........................wb......bw...........................")
 
 	funcMap := template.FuncMap{
 		"buildBoard": func(s string) []string {
@@ -41,15 +61,65 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tpl.Execute(w, map[string][]string{"InitBoard": initBoard}); err != nil {
+	if r.Method == http.MethodPost {
+		// Read body
+		var reqData OthelloReq
+		err := json.NewDecoder(r.Body).Decode(&reqData)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+
+		if reqData.Operation == START_OP {
+			if reqData.BlackOpt == HUMAN && reqData.WhiteOpt == HUMAN {
+				humanVHuman()
+			}
+
+			if reqData.BlackOpt != HUMAN && reqData.WhiteOpt != HUMAN {
+				cpuVCpu()
+			}
+
+			if reqData.BlackOpt == HUMAN && reqData.WhiteOpt != HUMAN || reqData.BlackOpt != HUMAN && reqData.WhiteOpt == HUMAN {
+				humanVCpu()
+			}
+		}
+
+		if reqData.Operation == MOVE_OP {
+
+		}
+
+		if reqData.Operation == REQUEST_OP {
+
+		}
+
+		if reqData.Operation == LEGAL_MOVES {
+
+		}
+
+	}
+
+	if err := tpl.Execute(w, map[string][]string{"board": board}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 }
 
-func setup(option int8, starting int8) (s gomcts.GameState, p gomcts.RolloutPolicy) {
+func humanVHuman() {
+	fmt.Println("...Human vs Human...")
+}
 
-	var state gomcts.GameState = gomcts.CreateOthelloInitialGameState(starting)
+func cpuVCpu() {
+	fmt.Println("...AI vs AI...")
+}
+
+func humanVCpu() {
+	fmt.Println("...Human vs AI...")
+}
+
+func setup(option int8) (s gomcts.GameState, p gomcts.RolloutPolicy) {
+
+	var state gomcts.GameState = gomcts.CreateOthelloInitialGameState()
 	var policy gomcts.RolloutPolicy
 
 	if option == 0 {
