@@ -1,1 +1,9 @@
-.box data = {{.}}
+{{ if eq . "w" }}
+ .tile
+  .white-piece
+{{ else if eq . "b"}}
+ .tile
+  .black-piece
+{{ else }}
+ .tile
+{{ end }}

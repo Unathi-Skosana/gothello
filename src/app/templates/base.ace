@@ -3,6 +3,31 @@ html lang=en
   head
     meta charset=utf-8
     title Gothello
+     script src=http://code.jquery.com/jquery-2.1.4.min.js type=text/javascript
+    link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.css
     link rel=stylesheet href=/static/css/styles.css
   body
-    = yield board
+
+    div.main
+      = yield board
+
+      .players
+        div.selects
+          div.select
+            select id=black
+              option value=1 Human
+              option value=2 Random AI
+              option value=3 Less Random AI
+          div.select
+            select id=white
+              option value=1 Human
+              option value=2 Random AI
+              option value=3 Less Random AI
+        div
+          a.button.is-dark.swap ⇅
+  
+      div.buttons
+        a.button.is-primary id=start Start game
+        a.button.is-primary id=restart Restart game
+
+     

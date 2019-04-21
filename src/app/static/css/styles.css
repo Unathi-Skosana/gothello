@@ -1,20 +1,85 @@
-.container {
+.main {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.board-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
 }
 
-.game-board {
- display: grid;
- justify-content: center;
- grid-template-columns: auto auto auto auto auto auto auto auto;
+.players {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
-.box {
- min-width: 30px;
- min-height: 30px;
- margin: 1px;
- background-color: tomato;
- border: 1px solid black;
+.selects {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.black-select,
+.white-select {
+  margin: 5px;
+}
+
+#start,
+#restart {
+  margin: 5px;
+}
+
+.white-piece {
+  width: 20px;
+  height: 20px;
+  border-radius: 100%;
+  background: white;
+}
+
+.black-piece {
+  width: 20px;
+  height: 20px;
+  border-radius: 100%;
+  background: black;
+}
+
+.possible-move {
+  width: 20px;
+  height: 20px;
+  border-radius: 100%;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.game-board {
+  display: grid;
+  justify-content: center;
+  grid-template-columns: auto auto auto auto auto auto auto auto;
+}
+
+.tile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  margin: 1px;
+  background-color: tomato;
+  border: 1px solid black;
+}
+
+.select {
+  margin: 10px;
 }

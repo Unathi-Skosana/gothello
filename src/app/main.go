@@ -1,64 +1,70 @@
 package main
 
 import (
-  "html/template"
-  "net/http"
-  "github.com/yosssi/ace"
-  "othello"
+	"fmt"
+	"gomcts"
+	"html/template"
+	"net/http"
+
+	"github.com/yosssi/ace"
 )
 
+func buildBoardArr(s string) []string {
+	board := make([]string, 0)
+
+	for i := range s {
+		board = append(board, string(s[i]))
+	}
+
+	return board
+}
 func handler(w http.ResponseWriter, r *http.Request) {
-  initBoard := " . . . . . . . . . . . . . . . . . . . . . . . . . . . w b . . . . . . b w . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+	initBoard := buildBoardArr("...........................wb......bw...........................")
 
-  funcMap := template.FuncMap{
-		"buildBoard": func(s string) string {
-      finalBoard := ""
-      for i := range(s) {
-        finalBoard += string(s[i])
-      }
-      return finalBoard
+	funcMap := template.FuncMap{
+		"buildBoard": func(s string) []string {
+			finalBoard := make([]string, 0)
+			for i := range s {
+				finalBoard = append(finalBoard, fmt.Sprintf(".box data=%s\n", string(s[i])))
+			}
+			return finalBoard
 		},
+	}
+
+	tpl, err := ace.Load("./templates/base", "./templates/board", &ace.Options{
+		DynamicReload: true,
+		FuncMap:       funcMap,
+	})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tpl.Execute(w, map[string][]string{"InitBoard": initBoard}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
-
-  tpl, err := ace.Load("./templates/base", "./templates/inner", &ace.Options{
-    DynamicReload: true,
-    FuncMap: funcMap,
-  })
-
-  if err != nil {
-  http.Error(w, err.Error(), http.StatusInternalServerError)
-  return
-  }
-
-
-  if err := tpl.Execute(w, map[string]string{"InitBoard": initBoard}); err != nil {
-  http.Error(w, err.Error(), http.StatusInternalServerError)
-  return
-  }
-}
-
-
 
 func setup(option int8, starting int8) (s gomcts.GameState, p gomcts.RolloutPolicy) {
 
-  var state gomcts.GameState = gomcts.CreateOthelloInitialGameState(starting)
-  var policy gomcts.RolloutPolicy
+	var state gomcts.GameState = gomcts.CreateOthelloInitialGameState(starting)
+	var policy gomcts.RolloutPolicy
 
-  if (option == 0) {
-    policy = gomcts.OthelloRandomRolloutPolicy
-  } else if (option == 1) {
-    policy = gomcts.OthelloRandomRolloutPolicy
-  }
+	if option == 0 {
+		policy = gomcts.OthelloRandomRolloutPolicy
+	} else if option == 1 {
+		policy = gomcts.OthelloRandomRolloutPolicy
+	}
 
-  return state, policy
+	return state, policy
 }
 
-
-
 func main() {
-  fsStatic := http.FileServer(http.Dir("static"))
-  http.Handle("/static/", http.StripPrefix("/static/", fsStatic))
+	fsStatic := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fsStatic))
 
-  http.HandleFunc("/", handler)
-  http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
 }
