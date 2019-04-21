@@ -56,9 +56,9 @@ func copyOthelloGameState(s OthelloGameState) OthelloGameState {
 
 
 
-func CreateOthelloInitialGameState() OthelloGameState {
+func CreateOthelloInitialGameState(starting int8) OthelloGameState {
     board := initializeOthelloBoard()
-    state := OthelloGameState{nextToMove: BLACK, board: board, emptySquares: uint16(REALBOARDSIZE)- 4}
+    state := OthelloGameState{nextToMove: starting, board: board, emptySquares: uint16(REALBOARDSIZE)- 4}
     return state
 }
 
