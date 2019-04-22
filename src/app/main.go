@@ -6,6 +6,7 @@ import (
 	"gomcts"
 	"html/template"
 	"net/http"
+	"strconv"
 
 	"github.com/yosssi/ace"
 )
@@ -37,17 +38,33 @@ func buildBoardArr(s string) []string {
 
 	return board
 }
-func handler(w http.ResponseWriter, r *http.Request) {
 
-	board := buildBoardArr("...........................wb......bw...........................")
+func legalActionsStr(state gomcts.GameState) []string {
+	legalActions := state.GetLegalActions()
+	legalActionsArr := make([]string, 0)
+
+	for i := range legalActions {
+		legalActionsArr = append(legalActionsArr, strconv.Itoa(int(legalActions[i].(gomcts.OthelloBoardGameAction).GetMove())))
+	}
+
+	return legalActionsArr
+
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	state := gomcts.CreateOthelloInitialGameState()
+	board := buildBoardArr(state.ToString())
+	legalActions := legalActionsStr(state)
+	nextToMove := []string{strconv.Itoa(int(state.NextToMove()))}
 
 	funcMap := template.FuncMap{
-		"buildBoard": func(s string) []string {
-			finalBoard := make([]string, 0)
-			for i := range s {
-				finalBoard = append(finalBoard, fmt.Sprintf(".box data=%s\n", string(s[i])))
-			}
-			return finalBoard
+		"Combine": func(val string, id int) map[string]string {
+			m := make(map[string]string)
+			row := id / 8
+			col := id % 8
+			m["val"] = val
+			m["id"] = strconv.Itoa(col + 1 + (row+1)*10)
+			return m
 		},
 	}
 
@@ -60,6 +77,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Starting game
 
 	if r.Method == http.MethodPost {
 		// Read body
@@ -98,7 +117,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if err := tpl.Execute(w, map[string][]string{"board": board}); err != nil {
+	// Initial state
+
+	if err := tpl.Execute(w, map[string][]string{"board": board, "actions": legalActions, "nextToMove": nextToMove}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -125,7 +146,7 @@ func setup(option int8) (s gomcts.GameState, p gomcts.RolloutPolicy) {
 	if option == 0 {
 		policy = gomcts.OthelloRandomRolloutPolicy
 	} else if option == 1 {
-		policy = gomcts.OthelloRandomRolloutPolicy
+		policy = gomcts.OthelloHeuristicRolloutPolicy
 	}
 
 	return state, policy

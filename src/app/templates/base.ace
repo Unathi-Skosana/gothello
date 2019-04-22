@@ -24,72 +24,10 @@ html lang=en
               option value=2 Random AI
               option value=3 Less Random AI
         div
-          a.button.is-dark.swap id=swap-btn ⇅
+          a.button.is-dark.swap onclick=id=swap-btn ⇅
   
       div.buttons
         a.button.is-primary id=start Start
         a.button.is-primary id=restart Restart
-    
-    = javascript
-      window.onload = function() {
-          document.getElementById("swap-btn").onclick = (evt) => {
-            var disabled = evt.target.attributes.disabled
 
-            if (disabled) {
-              return
-            }
-
-            var blackSelect = document.getElementById("black").value
-            var whiteSelect = document.getElementById("white").value
-
-            document.getElementById("white").value = blackSelect
-            document.getElementById("black").value = whiteSelect
-          }
-
-
-          document.getElementById("start").onclick = (evt) => {
-            var disabled = evt.target.attributes.disabled
-
-            if (disabled) {
-              return
-            }
-
-            var blackSelect = document.getElementById("black").value
-            var whiteSelect = document.getElementById("white").value
-
-            document.getElementById("white").setAttribute("disabled", true)
-            document.getElementById("black").setAttribute("disabled", true)
-
-            document.getElementById("swap-btn").setAttribute("disabled", true)
-            document.getElementById("start").setAttribute("disabled", true)
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "http://localhost:8080", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify({
-              operation: "start",
-              black : blackSelect,
-              white : whiteSelect,
-              move : ""
-            }));
-          }
-
-           document.getElementById("restart").onclick = (evt) => {
-            document.getElementById("white").removeAttribute("disabled")
-            document.getElementById("black").removeAttribute("disabled")
-
-            document.getElementById("swap-btn").removeAttribute("disabled")
-            document.getElementById("start").removeAttribute("disabled")
-            
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "http://localhost:8080", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify({
-              operation: "restart",
-              black : "",
-              white : "",
-              move : ""
-            }));
-          }
-      }; 
+    script src="/static/js/ui.js" type="text/javascript"

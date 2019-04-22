@@ -57,11 +57,28 @@
   background: black;
 }
 
-.possible-move {
+.black-possible-move {
   width: 20px;
   height: 20px;
   border-radius: 100%;
   background: rgba(0, 0, 0, 0.25);
+}
+
+.white-possible-move {
+  width: 20px;
+  height: 20px;
+  border-radius: 100%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.tile:hover .black-possible-move {
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.tile:hover .white-possible-move {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .game-board {

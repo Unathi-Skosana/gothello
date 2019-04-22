@@ -1,7 +1,5 @@
 package gomcts
 
-import "fmt"
-
 const EMPTY = 0
 const BLACK = 1
 const WHITE = -1
@@ -57,39 +55,41 @@ func copyOthelloGameState(s OthelloGameState) OthelloGameState {
 	return state
 }
 
-func CreateOthelloInitialGameState() OthelloGameState {
-	board := initializeOthelloBoard()
-	state := OthelloGameState{nextToMove: BLACK, board: board, emptySquares: uint16(REALBOARDSIZE) - 4}
-	return state
-}
-
 func evalFunc(s OthelloGameState) float64 {
 
-	var parity_heuristic float64 = 0.0
-	var mobility_heuristic float64 = 0.0
-	var corners_heuristic float64 = 0.0
-	var frontiers_heuristic float64 = 0.0
-
-	player := s.nextToMove
-	board := s.board
-
-	// Frontiers
-	player_frontiers := 0.0
-	opp_frontiers := 0.0
+	var parityHeuristic float64
+	var mobilityHeuristic float64
+	var cornersHeuristic float64
+	var frontiersHeuristic float64
+	var playerFrontiers float64
+	var oppFrontiers float64
+	var playerPieces float64
+	var oppPieces float64
+	var playerCorners float64
+	var oppCorners float64
+	var playerMoves float64
+	var oppMoves float64
 
 	var col int8
 	var row int8
+
+	player := s.nextToMove
+	board := s.board
+	playerPieces = float64(count(player, board))
+	oppPieces = float64(count(opponent(player), board))
+
+	// Frontiers
 
 	for row = 1; row <= 8; row++ {
 		for col = 1; col <= 8; col++ {
 			if board[col+(10*row)] != EMPTY {
 				for dir := 0; dir < 8; dir++ {
-					dir_move := col + (10 * row) + ALLDIRECTIONS[dir]
-					if dir_move >= 11 && dir_move <= 88 && board[dir_move] == EMPTY {
-						if board[dir_move+ALLDIRECTIONS[dir]] == player {
-							player_frontiers++
+					dirMove := col + (10 * row) + ALLDIRECTIONS[dir]
+					if dirMove >= 11 && dirMove <= 88 && board[dirMove] == EMPTY {
+						if board[dirMove+ALLDIRECTIONS[dir]] == player {
+							playerFrontiers++
 						} else {
-							opp_frontiers++
+							oppFrontiers++
 						}
 					}
 				}
@@ -97,78 +97,70 @@ func evalFunc(s OthelloGameState) float64 {
 		}
 	}
 
-	if player_frontiers > opp_frontiers {
-		frontiers_heuristic =
-			-100 * player_frontiers / (player_frontiers + opp_frontiers)
-	} else if opp_frontiers > player_frontiers {
-		frontiers_heuristic =
-			100 * opp_frontiers / (player_frontiers + opp_frontiers)
+	if playerFrontiers > oppFrontiers {
+		frontiersHeuristic =
+			-100 * playerFrontiers / (playerFrontiers + oppFrontiers)
+	} else if oppFrontiers > playerFrontiers {
+		frontiersHeuristic =
+			100 * oppFrontiers / (playerFrontiers + oppFrontiers)
 	} else {
-		frontiers_heuristic = 0.00
+		frontiersHeuristic = 0.00
 	}
 
-	// Parity
-	player_pieces := float64(count(player, board))
-	opp_pieces := float64(count(opponent(player), board))
-
-	if player_pieces > opp_pieces {
-		parity_heuristic = 100 * player_pieces / (player_pieces + opp_pieces)
-	} else if opp_pieces > player_pieces {
-		parity_heuristic = -100 * opp_pieces / (player_pieces + opp_pieces)
+	if playerPieces > oppPieces {
+		parityHeuristic = 100 * playerPieces / (playerPieces + oppPieces)
+	} else if oppPieces > playerPieces {
+		parityHeuristic = -100 * oppPieces / (playerPieces + oppPieces)
 	} else {
-		parity_heuristic = 0.00
+		parityHeuristic = 0.00
 	}
 
 	// Mobility
 
-	player_moves := float64(numLegalActions(s))
+	playerMoves = float64(numLegalActions(s))
 	s.nextToMove *= -1
-	opp_moves := float64(numLegalActions(s))
+	oppMoves = float64(numLegalActions(s))
 	s.nextToMove *= -1
 
-	if player_moves > opp_moves {
-		mobility_heuristic = 100 * (player_moves) / (player_moves + opp_moves)
-	} else if opp_moves > player_moves {
-		mobility_heuristic = -100 * (opp_moves) / (player_moves + opp_moves)
+	if playerMoves > oppMoves {
+		mobilityHeuristic = 100 * (playerMoves) / (playerMoves + oppMoves)
+	} else if oppMoves > playerMoves {
+		mobilityHeuristic = -100 * (oppMoves) / (playerMoves + oppMoves)
 	} else {
-		mobility_heuristic = 0.00
+		mobilityHeuristic = 0.00
 	}
 
-	// corners_heuristic
-	player_corners := 0.0
-	opp_corners := 0.0
-
 	if board[1+(10*8)] == player {
-		player_corners++
+		playerCorners++
 	} else if board[1+(10*8)] == opponent(player) {
-		opp_corners++
+		oppCorners++
 	}
 
 	if board[1+(10*1)] == player {
-		player_corners++
+		playerCorners++
 	} else if board[1+(10*1)] == opponent(player) {
-		opp_corners++
+		oppCorners++
 	}
 
 	if board[8+(10*1)] == player {
-		player_corners++
+		playerCorners++
 	} else if board[8+(10*1)] == opponent(player) {
-		opp_corners++
+		oppCorners++
 	}
 
 	if board[8+(10*8)] == player {
-		player_corners++
+		playerCorners++
 	} else if board[8+(10*8)] == opponent(player) {
-		opp_corners++
+		oppCorners++
 	}
 
-	corners_heuristic = player_corners - opp_corners
+	cornersHeuristic = playerCorners - oppCorners
 
 	// final score
-	return (PARITY_WEIGHT * parity_heuristic) +
-		(MOBILITY_WEIGHT * mobility_heuristic) +
-		(CORNERS_WEIGHT * corners_heuristic) +
-		(FRONTIERS_WEIGHT * frontiers_heuristic)
+	return (PARITY_WEIGHT * parityHeuristic) +
+		(MOBILITY_WEIGHT * mobilityHeuristic) +
+		(CORNERS_WEIGHT * cornersHeuristic) +
+		(FRONTIERS_WEIGHT * frontiersHeuristic)
 }
 
 func makeMove(move int8, s OthelloGameState) {
@@ -207,7 +199,7 @@ func getArrIndex(s int8) int8 {
 }
 
 func numLegalActions(s OthelloGameState) int8 {
-	var cnt int8 = 0
+	var cnt int8
 	for i := 11; i <= 88; i++ {
 		if legalPlayer(int8(i), s) == 1 {
 			cnt++
@@ -278,17 +270,6 @@ func opponent(nextToMove int8) int8 {
 	return nextToMove * -1
 }
 
-func PrintBoard(s OthelloGameState) {
-	fmt.Printf("   1 2 3 4 5 6 7 8 [%s=%d %s=%d]\n", nameof(BLACK), count(BLACK, s.board), nameof(WHITE), count(WHITE, s.board))
-	for row := 1; row <= 8; row++ {
-		fmt.Printf("%d  ", row)
-		for col := 1; col <= 8; col++ {
-			fmt.Printf("%s ", nameof(s.board[col+(10*row)]))
-		}
-		fmt.Printf("\n")
-	}
-}
-
 func nameof(piece int8) string {
 	if piece == EMPTY {
 		return "."
@@ -305,7 +286,7 @@ func nameof(piece int8) string {
 }
 
 func count(player int8, board []int8) int8 {
-	var cnt int8 = 0
+	var cnt int8
 
 	for i := 1; i <= 88; i++ {
 		if board[i] == player {

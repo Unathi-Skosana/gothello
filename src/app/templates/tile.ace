@@ -1,9 +1,10 @@
-{{ if eq . "w" }}
+{{ if eq .val "w" }}
  .tile
-  .white-piece
-{{ else if eq . "b"}}
+  .white-piece id={{.id}}
+{{ else if eq .val "b"}}
  .tile
-  .black-piece
+  .black-piece id={{.id}}
 {{ else }}
  .tile
+   .empty id={{.id}}
 {{ end }}
