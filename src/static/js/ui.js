@@ -1,3 +1,7 @@
+var HUMAN = 1;
+var RANDOM_AI = 2;
+var SMART_AI = 3;
+
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOCUMENT LOADED");
 });
@@ -7,9 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
 function _swap_action() {
   var disabled = document.getElementById("swap").attributes.disabled;
 
-  if (disabled) {
-    return;
-  }
+  if (disabled) return;
 
   var blackSelect = document.getElementById("black").value;
   var whiteSelect = document.getElementById("white").value;
@@ -19,13 +21,10 @@ function _swap_action() {
 }
 
 // Start button
-
 function _start_action(nextToMove, actions) {
   var disabled = document.getElementById("start").attributes.disabled;
 
-  if (disabled) {
-    return;
-  }
+  if (disabled) return;
 
   for (key in actions) {
     if (nextToMove == "1") {
@@ -50,6 +49,7 @@ function _start_action(nextToMove, actions) {
   document.getElementById("start").setAttribute("disabled", true);
 
   var xhr = new XMLHttpRequest();
+
   xhr.open("POST", "http://localhost:8080", true);
   xhr.setRequestHeader("Content-Type", "application/json");
   xhr.send(

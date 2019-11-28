@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gomcts"
 	"html/template"
 	"net/http"
 	"strconv"
+
+	"github.com/unathi-skosana/gothello/src/gomcts"
 	"github.com/yosssi/ace"
 )
 
@@ -29,9 +30,9 @@ type OthelloReq struct {
 }
 
 var (
-	firstPlayer int
+	firstPlayer  int
 	secondPlayer int
-	gameState gomcts.GameState
+	gameState    gomcts.GameState
 )
 
 func buildBoardArr(s string) []string {
@@ -57,10 +58,10 @@ func legalActionsStr(state gomcts.GameState) []string {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	state := gomcts.CreateOthelloInitialGameState()
-	board := buildBoardArr(state.ToString())
-	legalActions := legalActionsStr(state)
-	nextToMove := []string{strconv.Itoa(int(state.NextToMove()))}
+	var s gomcts.GameState = gomcts.CreateOthelloInitialGameState()
+	board := buildBoardArr(s.(gomcts.OthelloGameState).ToString())
+	legalActions := legalActionsStr(s)
+	nextToMove := []string{strconv.Itoa(int(s.(gomcts.OthelloGameState).NextToMove()))}
 
 	funcMap := template.FuncMap{
 		"Combine": func(val string, id int) map[string]string {
@@ -97,15 +98,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if reqData.Operation == START_OP {
 			if reqData.BlackOpt == HUMAN && reqData.WhiteOpt == HUMAN {
 				humanVHuman()
-
 			}
 
 			if reqData.BlackOpt != HUMAN && reqData.WhiteOpt != HUMAN {
 				cpuVCpu()
 			}
 
-			if reqData.BlackOpt == HUMAN && reqData.WhiteOpt != HUMAN || reqData.BlackOpt != HUMAN && reqData.WhiteOpt == HUMAN {
-				humanVCpu()
+			if reqData.BlackOpt == HUMAN && reqData.WhiteOpt != HUMAN {
+			}
+
+			if reqData.BlackOpt != HUMAN && reqData.WhiteOpt == HUMAN {
+				chosenAction := gomcts.MonteCarloTreeSearch(s, gomcts.OthelloHeuristicRolloutPolicy, 100)
+				s = chosenAction.ApplyTo(s)
+				board := buildBoardArr(s.(gomcts.OthelloGameState).ToString())
+				legalActions := legalActionsStr(s)
+				nextToMove := []string{strconv.Itoa(int(s.(gomcts.OthelloGameState).NextToMove()))}
 			}
 		}
 

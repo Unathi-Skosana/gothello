@@ -1,6 +1,10 @@
 package main
 
-import "github.com/unathi-skosana/gothello/src/gomcts"
+import (
+	"fmt"
+
+	"github.com/unathi-skosana/gothello/src/gomcts"
+)
 
 func main() {
 	var s gomcts.GameState = gomcts.CreateOthelloInitialGameState()
@@ -9,5 +13,6 @@ func main() {
 		chosenAction := gomcts.MonteCarloTreeSearch(s, gomcts.OthelloHeuristicRolloutPolicy, 1000)
 		s = chosenAction.ApplyTo(s)
 		s.(gomcts.OthelloGameState).PrintBoard()
+		fmt.Println(chosenAction)
 	}
 }
