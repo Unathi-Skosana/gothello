@@ -1,14 +1,13 @@
 package main
 
-import "gomcts"
+import "github.com/unathi-skosana/gothello/src/gomcts"
 
 func main() {
-	var state gomcts.GameState = gomcts.CreateOthelloInitialGameState()
-	gomcts.PrintBoard(state.(gomcts.OthelloGameState))
-	for !state.IsGameEnded() {
-		chosenAction := gomcts.MonteCarloTreeSearch(state, gomcts.OthelloHeuristicRolloutPolicy, 1000)
-		//fmt.Println(chosenAction)
-		state = chosenAction.ApplyTo(state)
-		state.PrintBoard()
+	var s gomcts.GameState = gomcts.CreateOthelloInitialGameState()
+	s.(gomcts.OthelloGameState).PrintBoard()
+	for !s.IsGameEnded() {
+		chosenAction := gomcts.MonteCarloTreeSearch(s, gomcts.OthelloHeuristicRolloutPolicy, 1000)
+		s = chosenAction.ApplyTo(s)
+		s.(gomcts.OthelloGameState).PrintBoard()
 	}
 }

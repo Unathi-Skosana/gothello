@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
-
 	"github.com/yosssi/ace"
 )
 
@@ -28,6 +27,12 @@ type OthelloReq struct {
 	Move      string `json:"move"`
 	Operation string `json:"operation"`
 }
+
+var (
+	firstPlayer int
+	secondPlayer int
+	gameState gomcts.GameState
+)
 
 func buildBoardArr(s string) []string {
 	board := make([]string, 0)
@@ -92,6 +97,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if reqData.Operation == START_OP {
 			if reqData.BlackOpt == HUMAN && reqData.WhiteOpt == HUMAN {
 				humanVHuman()
+
 			}
 
 			if reqData.BlackOpt != HUMAN && reqData.WhiteOpt != HUMAN {
@@ -147,6 +153,8 @@ func setup(option int8) (s gomcts.GameState, p gomcts.RolloutPolicy) {
 		policy = gomcts.OthelloRandomRolloutPolicy
 	} else if option == 1 {
 		policy = gomcts.OthelloHeuristicRolloutPolicy
+	} else {
+		policy = nil
 	}
 
 	return state, policy
