@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/unathi-skosana/gothello/src/gomcts"
+	gomcts "github.com/unathi-skosana/gothello/gomcts"
 )
 
 func main() {

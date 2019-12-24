@@ -120,9 +120,8 @@ func printGame(s tcell.Screen, ci, cj int) {
 	const y = tcell.ColorYellow
 	const r = tcell.ColorRed
 
-	_, HY := s.Size()
 	XOFF := 10
-	YOFF := HY/2 - 10
+	YOFF := 5
 	SYMBOLS := []string{" ", "●", "●", "+", "+"}
 	COLORS := []tcell.Color{d, b, r, d, d}
 
@@ -137,6 +136,7 @@ func printGame(s tcell.Screen, ci, cj int) {
 		puts(s, d, XOFF+BOARD_SIZE*4+2, YOFF+i*2+header+1, n)
 	}
 
+	// game state
 	for i := 0; i < BOARD_SIZE; i++ {
 		puts(s, d, XOFF, YOFF+header+2*i, board_row_top)
 		if i == 2 {
@@ -206,8 +206,22 @@ func main() {
 					i, j = nextBound(W, i, j)
 				case tcell.KeyDown:
 					i, j = nextBound(S, i, j)
-				case tcell.KeyUp: // up
+				case tcell.KeyUp:
 					i, j = nextBound(N, i, j)
+				case tcell.KeyRune:
+					switch ev.Rune() {
+					case 113:
+						close(quit)
+						return
+					case 104:
+						i, j = nextBound(W, i, j)
+					case 108:
+						i, j = nextBound(E, i, j)
+					case 106:
+						i, j = nextBound(S, i, j)
+					case 107:
+						i, j = nextBound(N, i, j)
+					}
 				}
 			case *tcell.EventResize:
 				s.Sync()
