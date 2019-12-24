@@ -1,7 +1,0 @@
-= content board
-  .board-container
-    .game-board.is-disabled
-      {{ range $i, $e := .board }}
-        = include ./templates/tile Combine . $i
-      {{end}}
-      
