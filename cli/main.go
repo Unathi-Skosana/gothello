@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -14,6 +15,54 @@ const BOARD_SIZE = 8
 const board_row_top = "+---+---+---+---+---+---+---+---+"
 
 var st = tcell.StyleDefault
+
+const (
+	E = iota
+	NE
+	N
+	NW
+	W
+	SW
+	S
+	SE
+)
+
+func nxtbound(d, i, j int) (int, int) {
+	_i, _j := nxt(d, i, j)
+	if bound(_i) && bound(_j) {
+		return _i, _j
+	} else {
+		return i, j
+	}
+}
+
+// Utils
+func nxt(d, i, j int) (int, int) {
+	switch d {
+	case E:
+		return i + 1, j
+	case NE:
+		return i + 1, j - 1
+	case N:
+		return i, j - 1
+	case NW:
+		return i - 1, j - 1
+	case W:
+		return i - 1, j
+	case SW:
+		return i - 1, j + 1
+	case S:
+		return i, j + 1
+	case SE:
+		return i + 1, j + 1
+	default:
+		panic(errors.New("unknown direction"))
+	}
+}
+
+func bound(i int) bool {
+	return i >= 0 && i < BOARD_SIZE
+}
 
 func puts(s tcell.Screen, fg tcell.Color, x, y int, str string) {
 	st = st.Foreground(fg)
@@ -162,20 +211,20 @@ func main() {
 				case tcell.KeyLeft: // left
 					i, j = gomcts.NextBound(W, i, j)
 				case tcell.KeyDown: // down
-					i, j = NextBound(S, i, j)
+					i, j = gomcts.NextBound(S, i, j)
 				case tcell.KeyUp: // up
-					i, j = NextBound(N, i, j)
+					i, j = gomcts.NextBound(N, i, j)
 				case tcell.KeyRune:
 					key := ev.Rune()
 					switch key {
 					case 104: // h
-						i, j = NextBound(W, i, j)
+						i, j = gomcts.NextBound(W, i, j)
 					case 108: // l
-						i, j = NextBound(E, i, j)
+						i, j = gomcts.NextBound(E, i, j)
 					case 106: // j
-						i, j = NextBound(S, i, j)
+						i, j = gomcts.NextBound(S, i, j)
 					case 107: // k
-						i, j = NextBound(N, i, j)
+						i, j = gomcts.NextBound(N, i, j)
 					case 113: // q
 						close(quit)
 						return

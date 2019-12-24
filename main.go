@@ -3,16 +3,26 @@ package main
 import (
 	"fmt"
 
-	gomcts "github.com/unathi-skosana/gothello/gomcts"
+	"github.com/unathi-skosana/gothello/gomcts"
+	"github.com/unathi-skosana/gothello/othello"
 )
 
 func main() {
-	var s gomcts.GameState = gomcts.CreateOthelloInitialGameState()
-	s.(gomcts.OthelloGameState).PrintBoard()
+
+	var i int = 1
+	var chosenAction gomcts.Action
+	var s gomcts.GameState = othello.New()
+
+	othello.PrintBoard(s)
+
 	for !s.IsGameEnded() {
-		chosenAction := gomcts.MonteCarloTreeSearch(s, gomcts.OthelloHeuristicRolloutPolicy, 1000)
+		if i%2 == 1 {
+			chosenAction = gomcts.MonteCarloTreeSearch(s, othello.OthelloMediumRolloutPolicy, 1500)
+		} else {
+			chosenAction = gomcts.MonteCarloTreeSearch(s, othello.OthelloHardRolloutPolicy, 1500)
+		}
 		s = chosenAction.ApplyTo(s)
-		s.(gomcts.OthelloGameState).PrintBoard()
+		othello.PrintBoard(s)
 		fmt.Println(chosenAction)
 	}
 }

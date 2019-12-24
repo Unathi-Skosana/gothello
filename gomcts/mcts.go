@@ -4,6 +4,8 @@ import (
 	"math"
 )
 
+type RolloutPolicy func(GameState) Action
+
 type monteCarloTreeSearchGameNode struct {
 	parent         *monteCarloTreeSearchGameNode
 	children       []*monteCarloTreeSearchGameNode
