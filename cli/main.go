@@ -1,65 +1,19 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
 	"github.com/gdamore/tcell"
 	"github.com/gdamore/tcell/encoding"
 	runewidth "github.com/mattn/go-runewidth"
+	"github.com/unathi-skosana/gothello/gomcts"
 )
 
 const BOARD_SIZE = 8
 const board_row_top = "+---+---+---+---+---+---+---+---+"
-const (
-	E = iota
-	NE
-	N
-	NW
-	W
-	SW
-	S
-	SE
-)
 
 var st = tcell.StyleDefault
-
-func nxt(d, i, j int) (int, int) {
-	switch d {
-	case E:
-		return i + 1, j
-	case NE:
-		return i + 1, j - 1
-	case N:
-		return i, j - 1
-	case NW:
-		return i - 1, j - 1
-	case W:
-		return i - 1, j
-	case SW:
-		return i - 1, j + 1
-	case S:
-		return i, j + 1
-	case SE:
-		return i + 1, j + 1
-	default:
-		panic(errors.New("unknown direction"))
-	}
-}
-
-func bound(i int) bool {
-	return i >= 0 && i < BOARD_SIZE
-}
-
-func nextBound(d, i, j int) (int, int) {
-	_i, _j := nxt(d, i, j)
-	if bound(_i) && bound(_j) {
-		return _i, _j
-	} else {
-		return i, j
-	}
-}
 
 func puts(s tcell.Screen, fg tcell.Color, x, y int, str string) {
 	st = st.Foreground(fg)
@@ -139,15 +93,6 @@ func printGame(s tcell.Screen, ci, cj int) {
 	// game state
 	for i := 0; i < BOARD_SIZE; i++ {
 		puts(s, d, XOFF, YOFF+header+2*i, board_row_top)
-		if i == 2 {
-			puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header+2*i+1, "SCORE")
-		}
-
-		if i == 3 {
-			puts(s, d, XOFF+BOARD_SIZE*4+16, YOFF+header+2*i+1, fmt.Sprintf("_ %2d - %-2d _", 0, 0))
-			puts(s, COLORS[1], XOFF+BOARD_SIZE*4+16, YOFF+header+2*i+1, SYMBOLS[1])
-			puts(s, COLORS[2], XOFF+BOARD_SIZE*4+26, YOFF+header+2*i+1, SYMBOLS[2])
-		}
 
 		for j := 0; j < BOARD_SIZE+1; j++ {
 			puts(s, d, XOFF+4*j, YOFF+header+2*i+1, "|")
@@ -159,10 +104,27 @@ func printGame(s tcell.Screen, ci, cj int) {
 	puts(s, COLORS[2], XOFF+2*ci*2+1, YOFF+2*cj+header+1, "[")
 	puts(s, COLORS[2], XOFF+2*ci*2+3, YOFF+2*cj+header+1, "]")
 
+	// information
+	puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header+1, "Movement")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+2, "h - Move left")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+3, "j - Move down")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+4, "k - Move up")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+5, "l - Move right")
+
+	puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header+8, "Commands")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+9, "q - Quit")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+10, "n - New game")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+11, "r - Reload")
+
+	// score
+	puts(s, d, XOFF+BOARD_SIZE*2-5, YOFF, fmt.Sprintf("_ %2d - %-2d _", 0, 0))
+	puts(s, COLORS[1], XOFF+BOARD_SIZE*2-5, YOFF, SYMBOLS[1])
+	puts(s, COLORS[2], XOFF+BOARD_SIZE*2+5, YOFF, SYMBOLS[2])
+
 }
 
 func main() {
-	i, j := 7, 7
+	i, j := 0, 0
 
 	s, e := tcell.NewScreen()
 	if e != nil {
@@ -195,32 +157,32 @@ func main() {
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
 				switch ev.Key() {
-				case tcell.KeyEscape, tcell.KeyEnter:
-					close(quit)
-					return
-				case tcell.KeyCtrlL:
-					s.Sync()
-				case tcell.KeyRight:
-					i, j = nextBound(E, i, j)
-				case tcell.KeyLeft:
-					i, j = nextBound(W, i, j)
-				case tcell.KeyDown:
-					i, j = nextBound(S, i, j)
-				case tcell.KeyUp:
-					i, j = nextBound(N, i, j)
+				case tcell.KeyRight: // right
+					i, j = gomcts.NextBound(E, i, j)
+				case tcell.KeyLeft: // left
+					i, j = gomcts.NextBound(W, i, j)
+				case tcell.KeyDown: // down
+					i, j = NextBound(S, i, j)
+				case tcell.KeyUp: // up
+					i, j = NextBound(N, i, j)
 				case tcell.KeyRune:
-					switch ev.Rune() {
-					case 113:
+					key := ev.Rune()
+					switch key {
+					case 104: // h
+						i, j = NextBound(W, i, j)
+					case 108: // l
+						i, j = NextBound(E, i, j)
+					case 106: // j
+						i, j = NextBound(S, i, j)
+					case 107: // k
+						i, j = NextBound(N, i, j)
+					case 113: // q
 						close(quit)
 						return
-					case 104:
-						i, j = nextBound(W, i, j)
-					case 108:
-						i, j = nextBound(E, i, j)
-					case 106:
-						i, j = nextBound(S, i, j)
-					case 107:
-						i, j = nextBound(N, i, j)
+					case 110: // n
+					// initialise new game
+					case 114: //r
+						s.Sync()
 					}
 				}
 			case *tcell.EventResize:

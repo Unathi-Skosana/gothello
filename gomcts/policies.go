@@ -37,7 +37,7 @@ func OthelloHeuristicRolloutPolicy(state GameState) Action {
 
 	for i = 0; i < numberOfActions; i++ {
 		cur := actions[i].ApplyTo(copyOthelloGameState(dummyGameState))
-		scores = append(scores, evalFunc(cur.(OthelloGameState)))
+		scores = append(scores, evalFunc(cur.(OthelloGameState), 250.00, 39.22, 801.724, 74.396))
 	}
 
 	var maxIndex int64
