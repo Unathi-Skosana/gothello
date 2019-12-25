@@ -7,8 +7,8 @@ import (
 )
 
 // PrintBoard - prints out game board to console
-func PrintBoard(i gomcts.GameState) {
-	s := i.(OthelloGameState)
+func PrintBoard(g gomcts.GameState) {
+	s := g.(OthelloGameState)
 	board := s.board
 	fmt.Printf("   1 2 3 4 5 6 7 8 [%s=%d %s=%d]\n", nameof(BLACK), count(board, BLACK), nameof(WHITE), count(board, WHITE))
 	for row := 1; row <= BOARD_WIDTH; row++ {
@@ -60,7 +60,7 @@ func copyOthelloGameState(s OthelloGameState) OthelloGameState {
 	return state
 }
 
-func evalFunc(s OthelloGameState, parityWeight, mobilityWeight, cornersWeight, frontiersWeight float64) float64 {
+func evaluate(s OthelloGameState, parityWeight, mobilityWeight, cornersWeight, frontiersWeight float64) float64 {
 	nextToMove := s.nextToMove
 	board := s.board
 
@@ -274,13 +274,13 @@ func opponent(nextToMove int) int {
 
 func nameof(piece int) string {
 	if piece == EMPTY {
-		return "."
+		return "+"
 	}
 	if piece == BLACK {
-		return "b"
+		return "@"
 	}
 	if piece == WHITE {
-		return "w"
+		return "X"
 	}
 
 	return "?"

@@ -31,10 +31,10 @@ func OthelloMediumRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	dummyGameState := state.(OthelloGameState)
 	numberOfActions := len(actions)
 
-	parityWeight := 0.00
-	mobilityWeight := 0.00
-	cornersWeight := 100.00
-	frontiersWeight := 0.00
+	parityWeight := 25.00
+	mobilityWeight := 25.00
+	cornersWeight := 25.00
+	frontiersWeight := 25.00
 
 	if numberOfActions == 1 {
 		return actions[0]
@@ -42,7 +42,7 @@ func OthelloMediumRolloutPolicy(state gomcts.GameState) gomcts.Action {
 
 	for i := 0; i < numberOfActions; i++ {
 		cur := actions[i].ApplyTo(copyOthelloGameState(dummyGameState))
-		scores = append(scores, evalFunc(cur.(OthelloGameState), parityWeight, mobilityWeight, cornersWeight, frontiersWeight))
+		scores = append(scores, evaluate(cur.(OthelloGameState), parityWeight, mobilityWeight, cornersWeight, frontiersWeight))
 	}
 
 	maxIndex := 0
@@ -76,7 +76,7 @@ func OthelloHardRolloutPolicy(state gomcts.GameState) gomcts.Action {
 
 	for i := 0; i < numberOfActions; i++ {
 		cur := actions[i].ApplyTo(copyOthelloGameState(dummyGameState))
-		scores = append(scores, evalFunc(cur.(OthelloGameState), parityWeight, mobilityWeight, cornersWeight, frontiersWeight))
+		scores = append(scores, evaluate(cur.(OthelloGameState), parityWeight, mobilityWeight, cornersWeight, frontiersWeight))
 	}
 
 	maxIndex := 0

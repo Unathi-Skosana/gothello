@@ -8,7 +8,6 @@ import (
 	"github.com/gdamore/tcell"
 	"github.com/gdamore/tcell/encoding"
 	runewidth "github.com/mattn/go-runewidth"
-	"github.com/unathi-skosana/gothello/gomcts"
 )
 
 const BOARD_SIZE = 8
@@ -27,7 +26,7 @@ const (
 	SE
 )
 
-func nxtbound(d, i, j int) (int, int) {
+func nxtBound(d, i, j int) (int, int) {
 	_i, _j := nxt(d, i, j)
 	if bound(_i) && bound(_j) {
 		return _i, _j
@@ -36,7 +35,6 @@ func nxtbound(d, i, j int) (int, int) {
 	}
 }
 
-// Utils
 func nxt(d, i, j int) (int, int) {
 	switch d {
 	case E:
@@ -142,7 +140,6 @@ func printGame(s tcell.Screen, ci, cj int) {
 	// game state
 	for i := 0; i < BOARD_SIZE; i++ {
 		puts(s, d, XOFF, YOFF+header+2*i, board_row_top)
-
 		for j := 0; j < BOARD_SIZE+1; j++ {
 			puts(s, d, XOFF+4*j, YOFF+header+2*i+1, "|")
 		}
@@ -159,6 +156,7 @@ func printGame(s tcell.Screen, ci, cj int) {
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+3, "j - Move down")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+4, "k - Move up")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+5, "l - Move right")
+	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+6, "Enter/Space - Place piece")
 
 	puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header+8, "Commands")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+9, "q - Quit")
@@ -207,29 +205,31 @@ func main() {
 			case *tcell.EventKey:
 				switch ev.Key() {
 				case tcell.KeyRight: // right
-					i, j = gomcts.NextBound(E, i, j)
+					i, j = nxtBound(E, i, j)
 				case tcell.KeyLeft: // left
-					i, j = gomcts.NextBound(W, i, j)
+					i, j = nxtBound(W, i, j)
 				case tcell.KeyDown: // down
-					i, j = gomcts.NextBound(S, i, j)
+					i, j = nxtBound(S, i, j)
 				case tcell.KeyUp: // up
-					i, j = gomcts.NextBound(N, i, j)
+					i, j = nxtBound(N, i, j)
+				case tcell.KeyEnter:
 				case tcell.KeyRune:
 					key := ev.Rune()
 					switch key {
+					case 32: // Space
 					case 104: // h
-						i, j = gomcts.NextBound(W, i, j)
+						i, j = nxtBound(W, i, j)
 					case 108: // l
-						i, j = gomcts.NextBound(E, i, j)
+						i, j = nxtBound(E, i, j)
 					case 106: // j
-						i, j = gomcts.NextBound(S, i, j)
+						i, j = nxtBound(S, i, j)
 					case 107: // k
-						i, j = gomcts.NextBound(N, i, j)
+						i, j = nxtBound(N, i, j)
+					case 110: // n
+						// initialise new game
 					case 113: // q
 						close(quit)
 						return
-					case 110: // n
-					// initialise new game
 					case 114: //r
 						s.Sync()
 					}

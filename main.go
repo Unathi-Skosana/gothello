@@ -24,5 +24,6 @@ func main() {
 		s = chosenAction.ApplyTo(s)
 		othello.PrintBoard(s)
 		fmt.Println(chosenAction)
+		i++
 	}
 }

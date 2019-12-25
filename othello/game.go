@@ -117,25 +117,25 @@ func (s OthelloGameState) EvaluateGame() (result gomcts.GameResult, ended bool) 
 
 // ApplyTo - OthelloBoardGameAction implementation of ApplyTo method of Action interface
 func (a OthelloBoardGameAction) ApplyTo(s gomcts.GameState) gomcts.GameState {
-	OthelloGameState := s.(OthelloGameState)
-	OthelloGameState.board = copyOthelloBoard(OthelloGameState.board)
+	g := s.(OthelloGameState)
+	g.board = copyOthelloBoard(g.board)
 
 	if a.move == NO_MOVES {
-		OthelloGameState.nextToMove = opponent(OthelloGameState.nextToMove)
-		return OthelloGameState
+		g.nextToMove = opponent(g.nextToMove)
+		return g
 	}
 
-	if OthelloGameState.nextToMove != a.value {
+	if g.nextToMove != a.value {
 		panic("*hands slapped*,  not your turn")
 	}
 
-	makeMove(a.move, OthelloGameState)
+	makeMove(a.move, g)
 
-	OthelloGameState.nextToMove = opponent(OthelloGameState.nextToMove)
+	g.nextToMove = opponent(g.nextToMove)
 
-	OthelloGameState.emptySquares--
+	g.emptySquares--
 
-	return OthelloGameState
+	return g
 }
 
 // GetLegalActions - OthelloGameState implementation of GetLegalAction method of GameState interface
