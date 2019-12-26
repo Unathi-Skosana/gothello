@@ -21,7 +21,8 @@ func OthelloRandomRolloutPolicy(state gomcts.GameState) gomcts.Action {
 
 }
 
-// OthelloHeuristicRolloutPolicy - Evaluate moves with evaluation function and select one with max evaluation score
+// OthelloMediumRolloutPolicy - Evaluate moves with evaluation function and
+// select one with max evaluation score with equally weighted heuristics
 func OthelloMediumRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	actions := state.GetLegalActions()
 	scores := make([]float64, 0)
@@ -55,7 +56,9 @@ func OthelloMediumRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	return actions[maxIndex]
 }
 
-// OthelloHeuristicRolloutPolicy - Evaluate moves with evaluation function and select one with max evaluation score
+// OthelloHardRolloutPolicy - Evaluate moves with evaluation function and select
+// one with max evaluation score with heuristic weights I've found to work quite
+// work.
 func OthelloHardRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	actions := state.GetLegalActions()
 	scores := make([]float64, 0)
@@ -64,8 +67,8 @@ func OthelloHardRolloutPolicy(state gomcts.GameState) gomcts.Action {
 
 	parityWeight := 21.45
 	mobilityWeight := 3.37
-	cornersWeight := 69.00
-	frontiersWeight := 6.38
+	cornersWeight := 70.00
+	frontiersWeight := 5.38
 
 	if numberOfActions == 1 {
 		return actions[0]
