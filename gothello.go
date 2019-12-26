@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/akamensky/argparse"
 	"github.com/gdamore/tcell"
@@ -13,11 +14,12 @@ import (
 	"github.com/unathi-skosana/gothello/pkg/othello"
 )
 
-const depth = 1500
+const depth = 1000
 const BOARD_SIZE = othello.BOARD_WIDTH
 const board_row_top = "+---+---+---+---+---+---+---+---+"
 
 var st = tcell.StyleDefault
+var clock *Clock
 
 // DIR
 const (
@@ -39,6 +41,7 @@ func main() {
 
 	// BLUE always goes first.
 	var gs gomcts.GameState = othello.New(othello.BLUE)
+	clock = newClock()
 
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
@@ -59,10 +62,11 @@ func main() {
 		printGame(s, gs.(othello.OthelloGameState), level, gs.NextToMove() == player, i, j)
 	}
 
+	clock.TickFunc = refresh
+
 	go func() {
 		for {
-			refresh()
-
+			// blocking
 			if gs.NextToMove() != player {
 				action := gomcts.MonteCarloTreeSearch(gs, eval, depth)
 				gs = action.ApplyTo(gs)
@@ -120,7 +124,9 @@ func main() {
 					case 107: // k
 						i, j = moveSelector(N, i, j)
 					case 110: // n
-						gs = othello.New(player)
+						gs = othello.New(othello.BLUE)
+						clock = newClock()
+						clock.TickFunc = refresh
 					case 113: // q
 						close(quit)
 						return
@@ -131,12 +137,41 @@ func main() {
 			case *tcell.EventResize:
 				s.Sync()
 			}
+
+			refresh()
 		}
 	}()
 
 	<-quit
 
 	s.Fini()
+}
+
+type Clock struct {
+	ticker   *time.Ticker
+	Tick     bool
+	Duration time.Duration
+	TickFunc func()
+}
+
+func newClock() *Clock {
+	clock := &Clock{
+		ticker: time.NewTicker(time.Millisecond * 500),
+		Tick:   true,
+	}
+	t0 := time.Now()
+
+	go func() {
+		for t := range clock.ticker.C {
+			clock.Tick = !clock.Tick
+			clock.Duration = t.Sub(t0)
+			if clock.TickFunc != nil {
+				clock.TickFunc()
+			}
+		}
+	}()
+
+	return clock
 }
 
 // parse and process arguments
@@ -168,19 +203,19 @@ func parsArgs() (d gomcts.RolloutPolicy, p int, l string) {
 			eval = othello.OthelloHardRolloutPolicy
 			level = "hard"
 		case "easy":
-
-		default:
 			eval = othello.OthelloRandomRolloutPolicy
 			level = "easy"
+		default:
+			panic("Invalid argument for -d flag. See help")
 		}
 
 		switch *player {
 		case "red":
 			nextToMove = 2
 		case "blue":
-		default:
-
 			nextToMove = 1
+		default:
+			panic("Invalid argument for -p flag. See help")
 		}
 	}
 
@@ -361,6 +396,16 @@ func printGame(s tcell.Screen, gs othello.OthelloGameState, level string, showLe
 	puts(s, w, XOFF+BOARD_SIZE*2-5, YOFF, fmt.Sprintf("_ %2d - %-2d _", p1, p2))
 	puts(s, COLORS[othello.BLUE], XOFF+BOARD_SIZE*2-5, YOFF, SYMBOLS[othello.BLUE])
 	puts(s, COLORS[othello.RED], XOFF+BOARD_SIZE*2+5, YOFF, SYMBOLS[othello.RED])
+
+	// time
+	mins := int(clock.Duration.Minutes())
+	secs := int(clock.Duration.Seconds()) % 60
+	deli := ":"
+	if !clock.Tick {
+		deli = " "
+	}
+	time := fmt.Sprintf("%02d%s%02d", mins, deli, secs)
+	puts(s, w, XOFF+BOARD_SIZE*2-len(time)/2, YOFF+header+2*BOARD_SIZE+3, time)
 
 	s.Show()
 }
