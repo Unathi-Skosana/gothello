@@ -7,9 +7,6 @@ import (
 	"github.com/unathi-skosana/gothello/pkg/gomcts"
 )
 
-// RolloutPolicy - function signature determining the next action during Monte Carlo Tree Search rollout
-type RolloutPolicy func(gomcts.GameState) gomcts.Action
-
 // OthelloRandomRolloutPolicy - Randomly select next move
 func OthelloRandomRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	actions := state.GetLegalActions()
@@ -41,7 +38,7 @@ func OthelloMediumRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	}
 
 	for i := 0; i < numberOfActions; i++ {
-		cur := actions[i].ApplyTo(copyGameState(dummyGameState))
+		cur := actions[i].ApplyTo(dummyGameState.Clone())
 		scores = append(scores, evaluate(cur.(OthelloGameState), parityWeight, mobilityWeight, cornersWeight, frontiersWeight))
 	}
 
@@ -75,7 +72,7 @@ func OthelloHardRolloutPolicy(state gomcts.GameState) gomcts.Action {
 	}
 
 	for i := 0; i < numberOfActions; i++ {
-		cur := actions[i].ApplyTo(copyGameState(dummyGameState))
+		cur := actions[i].ApplyTo(dummyGameState.Clone())
 		scores = append(scores, evaluate(cur.(OthelloGameState), parityWeight, mobilityWeight, cornersWeight, frontiersWeight))
 	}
 

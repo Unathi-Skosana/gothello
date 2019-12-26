@@ -1,31 +1,6 @@
 package othello
 
-import (
-	"fmt"
-
-	"github.com/unathi-skosana/gothello/pkg/gomcts"
-)
-
-// PrintBoard - prints out game board to console
-func PrintBoard(g gomcts.GameState) {
-	s := g.(OthelloGameState)
-	board := s.board
-	fmt.Printf("   1 2 3 4 5 6 7 8 [%s=%d %s=%d]\n", nameof(BLACK), count(board, BLACK), nameof(WHITE), count(board, WHITE))
-	for row := 1; row <= BOARD_WIDTH; row++ {
-		fmt.Printf("%d  ", row)
-		for col := 1; col <= BOARD_WIDTH; col++ {
-			fmt.Printf("%s ", nameof(board[col+(10*row)]))
-		}
-		fmt.Printf("\n")
-	}
-}
-func copyGameState(s OthelloGameState) OthelloGameState {
-	board := make([]int, BOARD_SIZE)
-	copy(board, s.board)
-	state := OthelloGameState{nextToMove: s.nextToMove, board: board, emptySquares: s.emptySquares}
-	return state
-}
-
+// evaluation function
 func evaluate(s OthelloGameState, parityWeight, mobilityWeight, cornersWeight, frontiersWeight float64) float64 {
 	nextToMove := s.nextToMove
 	board := s.board
@@ -125,6 +100,7 @@ func evaluate(s OthelloGameState, parityWeight, mobilityWeight, cornersWeight, f
 		frontiersWeight*frontiersHeuristic
 }
 
+// makes a move
 func makeMove(move int, s OthelloGameState) {
 	nextToMove := s.nextToMove
 	board := s.board
@@ -136,6 +112,7 @@ func makeMove(move int, s OthelloGameState) {
 	}
 }
 
+// flips pieces bracketed by opponent's piece
 func makeFlips(board []int, move, dir, nextToMove int) {
 	var bracketer int
 	var c int
@@ -154,24 +131,22 @@ func makeFlips(board []int, move, dir, nextToMove int) {
 	}
 }
 
+// gets the number of legal actions for player
 func numLegalActions(board []int, nextToMove int) int {
 	var cnt int
 	for i := FIRST_BLOCK; i <= LAST_BLOCK; i++ {
-		if legalPlayer(board, i, nextToMove) == 1 {
+		if legalMove(board, i, nextToMove) {
 			cnt++
 		}
 	}
 	return cnt
 }
 
-func legalPlayer(board []int, move, nextToMove int) int {
+// checks if a play is legal to play
+func legalMove(board []int, move, nextToMove int) bool {
 	var i int
 
-	if validPlayer(move) == 0 {
-		return 0
-	}
-
-	if board[move] == EMPTY {
+	if bound(move) && board[move] == EMPTY {
 		i = 0
 		for {
 			if !(i < DIR && wouldFlip(board, move, ALLDIRECTIONS[i], nextToMove) == 0) {
@@ -181,23 +156,23 @@ func legalPlayer(board []int, move, nextToMove int) int {
 		}
 
 		if i == DIR {
-			return 0
+			return false
+		} else {
+			return true
 		}
 
-		return 1
-
 	}
 
-	return 0
+	return false
 }
 
-func validPlayer(move int) int {
-	if (move >= FIRST_BLOCK) && (move <= LAST_BLOCK) && (move%10 >= 1) && (move%10 <= BOARD_WIDTH) {
-		return 1
-	}
-	return 0
+// checks if a move is valid
+func bound(move int) bool {
+	return (move >= FIRST_BLOCK) && (move <= LAST_BLOCK) && (move%10 >= 1) && (move%10 <= BOARD_WIDTH)
 }
 
+// Checks if a piece next to current player's piece would flip by checking
+// if there is bracketing piece in some direction
 func wouldFlip(board []int, move, dir, nextToMove int) int {
 	var c int
 
@@ -211,6 +186,8 @@ func wouldFlip(board []int, move, dir, nextToMove int) int {
 
 }
 
+// finds the position of the piece that is bracketing an opponent's piece
+// in some direction
 func findBracketingPiece(board []int, square, dir, nextToMove int) int {
 	for board[square] == opponent(nextToMove) {
 		square = square + dir
@@ -223,32 +200,19 @@ func findBracketingPiece(board []int, square, dir, nextToMove int) int {
 	return 0
 }
 
+// gets the opponent of the player
 func opponent(nextToMove int) int {
-	if nextToMove == BLACK {
-		return WHITE
-	} else if nextToMove == WHITE {
-		return BLACK
+	if nextToMove == BLUE {
+		return RED
+	} else if nextToMove == RED {
+		return BLUE
 	}
 
 	panic("*hands slapped*,  invalid player")
 
 }
 
-func nameof(piece int) string {
-	if piece == EMPTY {
-		return "+"
-	}
-	if piece == BLACK {
-		return "@"
-	}
-	if piece == WHITE {
-		return "X"
-	}
-
-	return "?"
-
-}
-
+// counts the number of pieces on the board belonging to a player
 func count(board []int, nextToMove int) int {
 	var cnt int
 

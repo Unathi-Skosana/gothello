@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/akamensky/argparse"
 	"github.com/gdamore/tcell"
 	"github.com/gdamore/tcell/encoding"
 	runewidth "github.com/mattn/go-runewidth"
@@ -17,38 +18,6 @@ const board_row_top = "+---+---+---+---+---+---+---+---+"
 
 var st = tcell.StyleDefault
 
-/*
-package main
-
-import (
-	"fmt"
-
-	"github.com/unathi-skosana/gothello/othello"
-)
-
-func main() {
-
-	var i int = 1
-	var chosenAction gomcts.Action
-	var s gomcts.GameState = othello.New()
-
-	othello.PrintBoard(s)
-
-	for !s.IsGameEnded() {
-		if i%2 == 1 {
-			chosenAction = gomcts.MonteCarloTreeSearch(s, othello.OthelloMediumRolloutPolicy, 1500)
-		} else {
-			chosenAction = gomcts.MonteCarloTreeSearch(s, othello.OthelloHardRolloutPolicy, 1500)
-		}
-		s = chosenAction.ApplyTo(s)
-		othello.PrintBoard(s)
-		fmt.Println(chosenAction)
-		i++
-	}
-}
-
-*/
-
 const (
 	E = iota
 	NE
@@ -60,11 +29,61 @@ const (
 	SE
 )
 
+func parsArgs() (d gomcts.RolloutPolicy, p int, l string) {
+	// Create new parser object
+	parser := argparse.NewParser("gothello", "")
+
+	// player ~ blue always starts
+	player := parser.String("p", "player", &argparse.Options{Required: false, Help: "Choose between : blue, red"})
+
+	// difficulty
+	difficulty := parser.String("d", "difficulty", &argparse.Options{Required: false, Help: "Choose between: easy, medium, hard"})
+
+	eval := othello.OthelloRandomRolloutPolicy
+	level := "easy"
+	nextToMove := 1
+
+	// Parse input
+	err := parser.Parse(os.Args)
+	if err != nil {
+		fmt.Print(parser.Usage(err))
+		os.Exit(1)
+	} else {
+		switch *difficulty {
+		case "medium":
+			eval = othello.OthelloMediumRolloutPolicy
+			level = "medium"
+		case "hard":
+			eval = othello.OthelloHardRolloutPolicy
+			level = "hard"
+		case "easy":
+
+		default:
+			eval = othello.OthelloRandomRolloutPolicy
+			level = "easy"
+		}
+
+		switch *player {
+		case "red":
+			nextToMove = 2
+		case "blue":
+		default:
+
+			nextToMove = 1
+		}
+	}
+
+	return eval, nextToMove, level
+
+}
+
 func main() {
-	i, j := 0, 0
+	i, j := 4, 5
 	s, e := tcell.NewScreen()
 
-	var gs gomcts.GameState = othello.New()
+	eval, player, level := parsArgs()
+
+	var gs gomcts.GameState = othello.New(2)
 
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
@@ -87,7 +106,7 @@ func main() {
 
 	var refresh = func() {
 		s.Clear()
-		printGame(s, gs.(othello.OthelloGameState), i, j)
+		printGame(s, gs.(othello.OthelloGameState), level, i, j)
 		s.Show()
 	}
 	go func() {
@@ -105,10 +124,34 @@ func main() {
 				case tcell.KeyUp: // up
 					i, j = nxtBound(N, i, j)
 				case tcell.KeyEnter:
+					if gs.NextToMove() == player {
+						actions := gs.GetLegalActions()
+						for k := 0; k < len(actions); k++ {
+							action := actions[k].(othello.OthelloBoardGameAction)
+							move := action.GetMove()
+							y := move/10 - 1
+							x := move%10 - 1
+							if x == i && y == j {
+								gs = action.ApplyTo(gs)
+							}
+						}
+					}
 				case tcell.KeyRune:
 					key := ev.Rune()
 					switch key {
 					case 32: // Space
+						if gs.NextToMove() == player {
+							actions := gs.GetLegalActions()
+							for k := 0; k < len(actions); k++ {
+								action := actions[k].(othello.OthelloBoardGameAction)
+								move := action.GetMove()
+								y := move/10 - 1
+								x := move%10 - 1
+								if x == i && y == j {
+									gs = action.ApplyTo(gs)
+								}
+							}
+						}
 					case 104: // h
 						i, j = nxtBound(W, i, j)
 					case 108: // l
@@ -118,7 +161,7 @@ func main() {
 					case 107: // k
 						i, j = nxtBound(N, i, j)
 					case 110: // n
-						// initialise new game
+						gs = othello.New(player)
 					case 113: // q
 						close(quit)
 						return
@@ -224,7 +267,7 @@ func puts(s tcell.Screen, fg tcell.Color, x, y int, str string) {
 	}
 }
 
-func printGame(s tcell.Screen, gs othello.OthelloGameState, ci, cj int) {
+func printGame(s tcell.Screen, gs othello.OthelloGameState, level string, ci, cj int) {
 	const header = 3
 	const d = tcell.ColorBlack
 	const b = tcell.ColorBlue
@@ -239,7 +282,7 @@ func printGame(s tcell.Screen, gs othello.OthelloGameState, ci, cj int) {
 
 	XOFF := 10
 	YOFF := 5
-	SYMBOLS := []string{" ", "●", "●", "+"}
+	SYMBOLS := []string{" ", "•", "•", "+"}
 	COLORS := []tcell.Color{d, b, r, d}
 
 	//var score [2]int
@@ -258,7 +301,9 @@ func printGame(s tcell.Screen, gs othello.OthelloGameState, ci, cj int) {
 		puts(s, d, XOFF, YOFF+header+2*i, board_row_top)
 		for j := 0; j < BOARD_SIZE+1; j++ {
 			piece := board[i+1+10*(j+1)]
-			puts(s, COLORS[piece], XOFF+2*i*2+2, YOFF+2*j+header+1, SYMBOLS[piece])
+			if piece == othello.BLUE || piece == othello.RED {
+				puts(s, COLORS[piece], XOFF+2*i*2+2, YOFF+2*j+header+1, SYMBOLS[piece])
+			}
 			puts(s, d, XOFF+4*j, YOFF+header+2*i+1, "|")
 		}
 	}
@@ -269,18 +314,24 @@ func printGame(s tcell.Screen, gs othello.OthelloGameState, ci, cj int) {
 		action := actions[i].(othello.OthelloBoardGameAction)
 		move := action.GetMove()
 		value := action.GetValue()
-		x := move/10 - 1
-		y := move%10 - 1
+
+		y := move/10 - 1
+		x := move%10 - 1
 
 		puts(s, COLORS[value], XOFF+2*x*2+2, YOFF+2*y+header+1, SYMBOLS[3])
 
 	}
 
 	// selector
-	puts(s, COLORS[nextToMove], XOFF+2*ci*2+1, YOFF+2*cj+header+1, "[")
-	puts(s, COLORS[nextToMove], XOFF+2*ci*2+3, YOFF+2*cj+header+1, "]")
+	if !gs.IsGameEnded() {
+		puts(s, COLORS[nextToMove], XOFF+2*ci*2+1, YOFF+2*cj+header+1, "{")
+		puts(s, COLORS[nextToMove], XOFF+2*ci*2+3, YOFF+2*cj+header+1, "}")
+	}
 
-	// control
+	// level and version
+	puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header-1, "level:")
+
+	// controls
 	puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header+1, "Movement")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+2, "h - Move left")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+3, "j - Move down")
@@ -288,14 +339,16 @@ func printGame(s tcell.Screen, gs othello.OthelloGameState, ci, cj int) {
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+5, "l - Move right")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+6, "Enter/Space - Place piece")
 
+	// commands
 	puts(s, d, XOFF+BOARD_SIZE*4+16+2, YOFF+header+8, "Commands")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+9, "q - Quit")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+10, "n - New game")
 	puts(s, d, XOFF+BOARD_SIZE*4+16+3, YOFF+header+11, "r - Reload")
 
 	// score
-	puts(s, d, XOFF+BOARD_SIZE*2-5, YOFF, fmt.Sprintf("_ %2d - %-2d _", 0, 0))
-	puts(s, COLORS[1], XOFF+BOARD_SIZE*2-5, YOFF, SYMBOLS[1])
-	puts(s, COLORS[2], XOFF+BOARD_SIZE*2+5, YOFF, SYMBOLS[2])
+	p1, p2 := gs.GetScore()
+	puts(s, d, XOFF+BOARD_SIZE*2-5, YOFF, fmt.Sprintf("_ %2d - %-2d _", p1, p2))
+	puts(s, COLORS[othello.BLUE], XOFF+BOARD_SIZE*2-5, YOFF, SYMBOLS[othello.BLUE])
+	puts(s, COLORS[othello.RED], XOFF+BOARD_SIZE*2+5, YOFF, SYMBOLS[othello.RED])
 
 }
